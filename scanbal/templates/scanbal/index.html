@@ -1,0 +1,78 @@
+{% extends 'scanbal/scan_base.html' %}
+
+{% block scripts %}
+
+<script>
+    function hideMessage() {
+        var messageElement = document.getElementById('message');
+        if (messageElement) {
+            messageElement.style.display = 'none';
+        }
+    }
+
+        // Funkcja ukrywająca komunikat po 3 sekundach
+        setTimeout(hideMessage, 3000);
+    </script>
+<script>
+
+
+    // Funkcja wyświetlająca komunikat na stronie
+    function showMessage(message, isError) {
+        const messageDiv = document.getElementById('message');
+        messageDiv.innerText = message;
+        messageDiv.style.display = 'block';
+        if (isError) {
+            var errorMessage = data.errors.replace(/<br>/g, '\n');
+            messageDiv.className = 'alert alert-danger'; // Dodaj klasę dla komunikatu o błędzie
+        } else {
+            messageDiv.className = 'alert alert-success'; // Dodaj klasę dla komunikatu o sukcesie
+        }
+        
+        // Ustawia ponownie ukrywanie komunikatu po 3 sekundach
+        setTimeout(hideMessage, 3000);
+    }
+</script>
+
+<script>
+    // Obsługa zdarzenia klawiatury dla pola identyfikatora
+    function handleEnterKey(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            document.getElementById("scan-form").submit();
+        }
+    }
+
+    // Obsługa zdarzenia wprowadzania tekstu do pola identyfikatora
+    function handleInput(event) {
+        const inputValue = event.target.value;
+        const numericValue = inputValue.replace(/[^0-9]/g, '');  // Pozostaw tylko cyfry
+        event.target.value = numericValue;  // Zaktualizuj wartość pola
+    }
+</script>
+{% endblock %}
+
+{% block content%}
+
+<div class="container ">
+    <div class="jumbotron">
+        <h4 class="pb-3">Zeskanuj swojego badge'a:</h4>
+            
+        <form method="post" id="scan-form">
+            {% csrf_token %}
+
+            <!-- Dodaj atrybuty type, inputmode i pattern dla walidacji liczby -->
+            <input type="text" class="form-control" id="identifier" name="identifier" inputmode="numeric" pattern="[0-9]+" title="Wprowadź liczbę" required autofocus onkeydown="handleEnterKey(event)" oninput="handleInput(event)">
+            <br>
+        </form>
+
+        {% if error %}
+            <div id="message" class="h4 alert alert-danger">{{ error|linebreaks }}</div>
+        {% endif %}
+
+        {% if success %}
+            <div id="message" class="h4 alert alert-success">{{ success|linebreaks }}</div>
+        {% endif %}
+
+    </div>  
+</div>
+{% endblock %}

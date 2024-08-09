@@ -1,0 +1,187 @@
+<!-- panel/templates/panel/base.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<!-- ... -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel{% endblock %}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    {% block styles %}
+    <style>
+        nav {
+            background-color: #112b5e;
+            min-height: 3rem;
+        }
+
+        .navbar-brand,
+        .nav-link {
+            color: rgb(227, 231, 233); /* White text color */
+        }
+
+        .navbar-brand:hover,
+        .nav-link:hover {
+            color: white; /* White text color on hover */
+        }
+
+        .navbar-light .navbar-toggler-icon {
+            background-color: white; /* White hamburger icon color */
+        }
+
+        .navbar-toggler {
+            border-color: white; /* White border color for the hamburger icon */
+        }
+
+        .navbar-toggler:focus,
+        .navbar-toggler-icon:focus {
+            outline: none; /* Remove focus outline for hamburger icon */
+        }
+
+        .navbar-toggler:hover,
+        .navbar-toggler-icon:hover {
+            background-color: white; /* White background color for the hamburger icon on hover */
+        }
+    </style>
+    <style>
+        /* Dodaj styl do zasłaniania ekranu przez modal */
+        .modal-backdrop {
+            display: none !important;
+        }
+    </style>
+  {% endblock %}
+</head>
+<!-- ... -->
+<body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0;">
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+          <div class="d-flex justify-content-between align-items-center w-100">
+            <a class="navbar-brand" href="{% url 'panel:panel-index' %}">
+              <img src="{% static 'logo.png' %}" width="80" height="80" class="d-inline-block align-content-center" alt="Logo">
+              <b>Panel administracyjny EventApp (v. 1.20)</b>
+            </a>
+            <div class="text-right">
+              <form action="{% url 'panel:logout' %}" method="post" id="logout-form">
+                {% csrf_token %}
+                <p class="navbar-text mb-0 mr-3" style="font-size: 18px; color: #112b5e; text-transform: capitalize;">Witaj, {{user.username}}</p>
+
+                <button type="submit" class="btn btn-danger">Wyloguj</button>
+              </form>
+            </div>
+          </div>
+        </div>
+    </nav>
+    <nav class="nav">
+      <li class="nav-item dropdown ml-3">
+
+      {% if active_event %}
+        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Raporty</a>
+        <div class="dropdown-menu">
+          <a id="generate-excel-link" class="dropdown-item" href="{% url 'panel:generate_excel_report' %}">Generuj listę zapisanych (excel)</a>
+          <a id="generate-wypisani-excel-link" class="dropdown-item" href="{% url 'panel:generate_excel_report_wypisani' %}">Generuj listę wypisanych (excel)</a>
+          {% if active_event.rodzaj_eventu == 'piknik' %}
+          <!-- Dodatkowe raporty tylko dla eventów piknik -->
+          <a id="generate-zapisani-transport-link" class="dropdown-item" href="{% url 'panel:excel_report_piknik_transport' %}">Generuj listę zapisanych - własny transport (excel)</a>
+          <a id="generate-zapisani-przystanek-link" class="dropdown-item" href="{% url 'panel:excel_report_piknik_przystanek' %}">Generuj listę zapisanych - transport amazoński (excel)</a>
+      {% endif %}
+        </div>
+      {% endif %}
+
+      </li>
+      <a class="nav-link" href="{% url 'panel:panel-index' %}">Podsumowanie</a>
+      <a class="nav-link" href="{% url 'panel:lista_osob_zapisanych' %}">Lista zapisanych</a>
+      <a class="nav-link" href="{% url 'panel:lista_osob_wypisanych' %}">Lista wypisanych</a>
+      <a id="wylacz-link" class="nav-link" href="#" onclick="showConfirmationModal()">Wyłącz zapisy</a>
+
+      <!-- Modal potwierdzenia -->
+      <div class="modal" id="confirmation-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Czy na pewno chcesz wyłączyć zapisy na aktywny event?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Zmiana onclick bezpośrednio na obsługę zdarzenia -->
+                    <button type="button" class="btn btn-primary" id="confirm-btn">Tak</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Nie</button>
+                </div>
+            </div>
+        </div>
+      </div>
+    </nav>
+    <div class="container mt-5 " style="flex-grow: 1;  overflow-y: auto;">
+    {% block content %}{% endblock %}
+    </div>
+    <!-- Footer -->
+    {% include 'footer.html' %}
+
+    {% block scripts %}{% endblock %}
+    <!-- Bootstrap JS (popper.js is required for dropdowns) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    
+
+    <script>
+      // Funkcja do pokazania modala
+      function showConfirmationModal() {
+        $('#confirmation-modal').modal('show');
+      }
+
+      
+        // Zdefiniuj funkcję do ukrywania linku
+        function toggleWylaczLink(active) {
+            var link = document.getElementById('wylacz-link');
+            if (link) {
+                link.style.display = active ? 'block' : 'none';
+            }
+        }
+
+        // Przekazanie zmiennej JavaScript do funkcji
+        var isEventActive = {{ active_event|yesno:"true,false" }};
+
+        // Wywołaj funkcję po załadowaniu strony, aby ukryć link, jeśli nie ma aktywnego eventu
+        document.addEventListener('DOMContentLoaded', function () {
+            toggleWylaczLink(isEventActive);
+        });
+
+        // Dodaj obsługę zdarzenia dla przycisku "Tak"
+        document.getElementById('confirm-btn').addEventListener('click', function () {
+            window.location.href = "{% url 'panel:wylacz_zapisy' %}";
+        });
+    </script>
+    <script>
+      // Dodaj obsługę zdarzenia dla przycisku "Tak"
+      document.getElementById('confirm-btn').addEventListener('click', function () {
+          // Dodaj kod do przekazania komunikatu w adresie URL
+          window.location.href = "{% url 'panel:wylacz_zapisy' %}?success_message=Zapisy+na+bal+zostały+wyłączone.";
+      });
+    </script>
+    <script>
+      // Zdefiniuj funkcję do ukrywania linku generowania Excela
+      function toggleGenerateExcelLink(active) {
+        var excelLink = document.getElementById('generate-excel-link');
+        var wypisaniExcelLink = document.getElementById('generate-wypisani-excel-link');
+
+        if (excelLink) {
+            excelLink.style.display = active ? 'block' : 'none';
+        }
+
+        if (wypisaniExcelLink) {
+            wypisaniExcelLink.style.display = active ? 'block' : 'none';
+        }
+    }
+      // Przekazanie zmiennej JavaScript do funkcji
+      var isEventActive = {{ active_event|yesno:"true,false" }};
+
+      // Wywołaj funkcję po załadowaniu strony, aby ukryć link, jeśli nie ma aktywnego eventu
+      document.addEventListener('DOMContentLoaded', function () {
+          toggleGenerateExcelLink(isEventActive);
+      });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,142 @@
+V. 1.02 :
+#------------------------------------------------------------------------#
+- dodanie panelu - aplikacji do obslugi dla osob zarzadzajacyach- wersja wczescna bez funkcjonalnosci, wyswietlanie zapisanych osob do bazy
+#------------------------------------------------------------------------#
+
+V. 1.03 :
+#------------------------------------------------------------------------#
+update bal/forms.py - zamiana wprowadzonych wartosci w polu imie i nazwisko tak aby tylko pierwsza litera byla duza
+update aplikacji panel - dodano logowanie, dodano uzytkownika i ogranizczono dostep do zalogowanych userow, dodano panel administracyjny umozliwiajacy pokazanie ilosci zapisanchy userow - dodano podsumowanie
+#------------------------------------------------------------------------#
+
+V. 1.04 :
+#------------------------------------------------------------------------#
+- panel administracyjny dodano wylogowanie sie z panelu. (settings.py, panel/base.html, 
+#------------------------------------------------------------------------#
+
+V. 1.05 :
+#------------------------------------------------------------------------#
+- dodanie drukowania raportu. 
+panel/ views.py
+panel/base.html
+panel/urls.py
+panel/index.html
+
+doinstalowac biblioteki. openpyxl
+#------------------------------------------------------------------------#
+
+V. 1.06 :
+#------------------------------------------------------------------------#
+- poprawiono wyswietlanie wartosci dla piknik zmiana z TRUE/FALSE na Tak/Nie
+- dodano tez te wartosci do wydruku.
+#------------------------------------------------------------------------#
+
+v. 1.07 :
+#------------------------------------------------------------------------#
+- dodano pole login sie zawsze zapisuje malymi literami.
+plik: bal/forms.py
+#------------------------------------------------------------------------#
+
+V. 1.08 : 
+#------------------------------------------------------------------------#
+- dodano liste wypisanych z eventu,
+- dodano przycisk umozliwiajacy wylaczenie aktywnego eventu
+#------------------------------------------------------------------------#
+
+V. 1.09 :
+#------------------------------------------------------------------------#
+- poprawiono obsluge przycisku wylaczenia eventu. 
+- Dodano dodatkowo validacje i dodatkowe pytanie potwierdzajace.
+- dodano znikanie tego przycisku w menu
+#------------------------------------------------------------------------#
+
+V. 1.10 :
+#------------------------------------------------------------------------#
+- dodano do bazy danych do modelu Bal,Piknik date utworzenia.
+- dodano obsuge i wyswietlanie daty w panelu admina
+
+bal/models.py
+bal/admin.py
+piknik/models.py
+piknik/admin.py
+panel/views.py
+panel/index.html
+panel/lista_osob_wypisanych.html
+
+all (panel)
+- make migrations
+- migrate
+#------------------------------------------------------------------------#
+
+V. 1.5 :
+#------------------------------------------------------------------------#
+- dodanie obslugi login, imienia i nazwiska podwojnego dla aplikacji piknik.
+
+piknik/forms.py
+piknik/views.py
+#------------------------------------------------------------------------#
+
+V. 1.6 i panel 1.11 :
+- poprawiono obsluge dla pikniku,
+- poprawiono bledy znikajacych przyciskow
+- dodano raporty excel dla wypisanych.
+
+
+do aktualizacji : 
+V. 1.11 i V.1.6
+#------------------------------------------------------------------------#
+Panel V 1.12 :
+- dodano obsluge zalogowanego usera - wyswietlanie nazwy zalogowanego usera
+
+#------------------------------------------------------------------------#
+Panel V. 1.13-1.15 :
+- poprawiono bledy w datach
+- dodano poprawe czytelnosci osi x
+- dodano czytelnosc punktow
+#------------------------------------------------------------------------#
+Panel V. 1.16 : 
+- zmiana wyswietlanie w przypadku nieaktywnego eventu (base.html, views.py)
+- 
+#------------------------------------------------------------------------#
+App V. 2.0
+- aktualizacja aplikacji Piknik
+- dodano obsluge komunikatow dla loginu - cyfry i usera w bazie
+- dodano obslugo transportu wlasnego lub przystanku
+- dodano obsluge komunikatow bledu dla tych przypadkow
+- poprawiono obslug komunikatow wielkosc kolory czcianki
+#------------------------------------------------------------------------#
+Panel V. 1.20 :
+- poprawiono liste wypisanych i zapisanych dla pikniku 
+- poprawiono wyswietlanie wartosci True/False na Tak/Nie
+- dodano 2 dodatkowe raporty dla zapisanych z transportm wlasnym i amazonskim
+-- do admina django dodano wyszukiwanie
+#------------------------------------------------------------------------#
+
+Piknik : - zmiana wersji aplikacji na (2.0)
+admin.py , model, views, forms - work in progress ,confirm.html
+caly - panel
+caly - piknik
+caly - bal
+
+do aktualizacji : panel v1.16, app v2.0, panel v.1.20
+
+Do zrobienia:
+
+- wszystkie te opcje po wybraniu podsumownanie eventu z panelu : - i wybranie odbytego eventu
+---
+- podsumowanie eventu w panelu admina :
+- ilosc obytych eventow ilosc zapisanych ilosc wypisanych
+- wykres z zpisnymi
+- i mozliwosc drukowania exceli
+---
+
+- do poprawy obslug komunikatow i wielkosci dla pikniku tak aby bylo jak dla Balu.
+- do poprawy i dodania model pikniku (nowa pozycja - wlasny_transport
+- do zbudowania logika w formularzu ( po wybraniu wlasny transport znika do wyboru przystanek i pole ustawia sie na default)
+  Albo bez dodawanie do modelu tylko do formularza (opcja jedna wybranie przystanku o nazwie wlasny transport, albo po naduszeniu wlasny transport automatycznie defaltowo dodaje sie pozycja wlasny transport do przystanku.
+  Temat do rozwazanie!
+
+pomysly :
+- dodanie flagi zakonczone do eventu i uniemozliwienie jej ponownego uruchomienia
+- tylko z poziomu supertadmina
+- dodanie zakresu dat w ktory aktywny bedzie event i jego automatyczne wlaczanie i wylaczanie

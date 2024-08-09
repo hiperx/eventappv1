@@ -1,0 +1,169 @@
+<!-- templates/piknik/confirm_piknik.html -->
+{% extends 'base.html' %}
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+
+$(document).ready(function() {
+    $('#registrationForm').submit(function(e) {
+        e.preventDefault();
+        $.ajax({
+            type: 'POST',
+            url: window.location.href,
+            data: $('#registrationForm').serialize(),
+            success: function(data) {
+                if (data.hasOwnProperty('success') && data.success) {
+                    // Jeśli zapis się powiedzie, wywołaj funkcję successCallback
+                    successCallback();
+                } else {
+                    // Jeśli wystąpią błędy, wyświetl je na stronie
+                    if (data.hasOwnProperty('errors')) {
+                        var errorMessage = data.errors.replace(/<br>/g, '\n');
+                        //$('#error-message').text(data.errors).css('color', 'red'); //'Błąd zapisu!!!: ' + data.errors
+                        $('#error-message').html('<h4 style="color: red;">' + data.errors + '</h4><br>');
+                        // Ukryj komunikat po 3 sekundach
+                        setTimeout(function() {
+                            $('#error-message').text('').css('color', 'red');
+                        }, 3000);
+                        // Sprawdź, czy pole przystanek lub pole transportu są puste
+                        var przystanekIsEmpty = $('#id_przystanek').val() === '';
+                        var transportIsEmpty = !$('#id_transport_wlasny').is(':checked');
+                        if (!(przystanekIsEmpty && transportIsEmpty)) {
+                            // Jeśli żadne z pól nie jest puste, ponownie ustaw pole login na puste
+                            $('#id_login').val('');
+                            // Ustawienie fokusu na polu login po wyczyszczeniu
+                            document.getElementById("id_login").focus();
+                        }
+                    } else {
+                        $('#error-message').text('Nieznany błąd').css('color', 'red');
+                        // Ukryj komunikat po 3 sekundach
+                        setTimeout(function() {
+                            $('#error-message').text('').css('color', 'red');
+                        }, 3000);
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Wystąpił błąd:', error);  // Dodaj do konsoli dokładny komunikat błędu
+                console.log('Odpowiedź serwera:', xhr.responseText);  // Dodaj do konsoli odpowiedź serwera
+                var errorData = JSON.parse(xhr.responseText);
+                $('#error-message').text('Błąd zapisuxx: ' + errorData.errors).css('color', 'red');
+                // Ukryj komunikat po 3 sekundach
+                setTimeout(function() {
+                    $('#error-message').text('').css('color', 'red');
+                }, 3000);
+            }
+        });
+    });
+
+    function successCallback() {
+        console.log('successCallback executed');
+        // Ukryj formularz
+        $('#registrationForm').hide();
+        $('#cont-name').hide();
+
+        // Pokaż komunikat
+        $('#successMessage').show();
+
+        // Funkcja przekierowująca po 5 sekundach
+        setTimeout(function() {
+            window.location.href = '{% url "index" %}';
+        }, 3000);
+    }
+
+    function updatePrzystanekField() {
+        // Funkcja sprawdzająca i aktualizująca stan pola przystanek
+        var przystanekField = $('#id_przystanek');
+        var originalValue = przystanekField.val();
+
+        if ($('#id_transport_wlasny').is(':checked')) {
+            // Jeśli zaznaczono transport własny, wyłącz pole przystanek za pomocą atrybutu disabled
+            przystanekField.prop('disabled', true);
+            // Ustaw wartość przystanek na null
+            przystanekField.val(null);
+        } else {
+            // Jeśli odznaczono transport własny, przywróć oryginalny stan pola przystanek
+            przystanekField.prop('disabled', false);
+            przystanekField.val(originalValue);
+        }
+    }
+
+    // Sprawdź stan pola transport_wlasny na początku
+    updatePrzystanekField();
+
+    $('#id_transport_wlasny').change(function() {
+        // Wywołaj funkcję aktualizacji po zmianie stanu transport_wlasny
+        updatePrzystanekField();
+    });
+});
+
+
+</script>
+
+    
+    
+
+{% endblock %}
+
+{% block content %}
+<div class="min-vh-100">
+    <div class="jumbotron" >
+
+
+        <div id="error-message"></div>
+
+        {% if error_message %}
+            <p style="color: red;">{{ error_message }}</p>
+        {% endif %}
+            
+
+
+        <form method="post" action="" id="registrationForm">
+            {% csrf_token %}
+            <div id="cont-name">
+                <h4>Wprowadz dane:</h4>
+                <p class="text-secondary">Pola z gwiazdką są wymagane !</p>
+            </div>
+            <table class="mb-3">
+                <tr>
+                    <th scope="row">{{ form.login.label_tag }}*</th>
+                    <td class="pl-2 pb-2">{{ form.login }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">{{ form.imie.label_tag }}*</th>
+                    <td class="pl-2 pb-2">{{ form.imie }}</td>
+                </tr>
+                <tr class="mb-1">
+                    <th scope="row">{{ form.nazwisko.label_tag }}*</th>
+                    <td class="pl-2 pb-2">{{ form.nazwisko }}</td>
+                </tr>
+                <tr class="mb-1">
+                    <th scope="row">{{ form.osoba_towarzyszaca.label_tag }}</th>
+                    <td class="pl-2 pb-2">{{ form.osoba_towarzyszaca }}</td>
+                </tr>
+                <tr class="mb-1">
+                    <th scope="row">{{ form.liczba_dzieci.label_tag }}</th>
+                    <td class="pl-2 pb-2">{{ form.liczba_dzieci }}</td>
+                </tr>
+                <tr class="mb-1">
+                    <th scope="row">{{ form.transport_wlasny.label_tag }}</th>
+                    <td class="pl-2 pb-2">{{ form.transport_wlasny }}</td>
+                </tr>
+                <tr class="mb-1">
+                    <th scope="row">{{ form.przystanek.label_tag }}*</th>
+                    <td class="pl-2 pb-2">{{ form.przystanek }}</td>
+                </tr>
+            </table>
+            <button type="submit" class="btn btn-primary">Zapisz na listę</button>
+            <a href="{% url 'index' %}" class="btn btn-secondary">Anuluj</a>
+        </form>
+
+
+
+
+        <div id="successMessage" style="display: none;">
+            <h2 style="color: green;">Użytkownik został pomyślnie zapisany na Piknik!</h2>
+        </div>
+    </div>
+</div>
+{% endblock %}

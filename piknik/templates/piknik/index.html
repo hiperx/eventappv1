@@ -1,0 +1,57 @@
+<!-- piknik/templates/piknik/index.html -->
+{% extends 'base.html' %}
+
+{% block scripts %}
+
+
+    <script>
+        function hideMessage() {
+            var messageElement = document.getElementById('message');
+            if (messageElement) {
+                messageElement.style.display = 'none';
+            }
+        }
+    
+            // Funkcja ukrywająca komunikat po 3 sekundach
+            setTimeout(hideMessage, 3000);
+        </script>
+    
+        <script>
+            // Obsługa zdarzenia klawiatury dla pola identyfikatora
+            function handleEnterKey(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    document.getElementById("piknik_registration").submit();
+                }
+            }
+    
+            // Obsługa zdarzenia wprowadzania tekstu do pola identyfikatora
+            function handleInput(event) {
+                const inputValue = event.target.value;
+                const numericValue = inputValue.replace(/[^0-9]/g, '');  // Pozostaw tylko cyfry
+                event.target.value = numericValue;  // Zaktualizuj wartość pola
+            }
+        </script>
+{% endblock %}
+
+{% block content%}
+<div class="min-vh-100">
+    <div class="jumbotron">
+        <h1>Rejestracja na firmowy Piknik:</h1>
+        <p>Zeskanuj swoj identyfikator:</p>
+
+        {% if error %}
+        <h4 id="message" style="color: red;">{{ error }}</h4>
+        {% endif %}
+
+        <form method="post" action="{% url 'piknik:index' %}" id="piknik_registration">
+            {% csrf_token %}
+
+            <!-- Dodaj atrybuty type, inputmode i pattern dla walidacji liczby -->
+            <input type="text" class="form-control" id="identifier" name="identyfikator" inputmode="numeric" pattern="[0-9]+" title="Wprowadź liczbę" required autofocus onkeydown="handleEnterKey(event)" oninput="handleInput(event)">
+            <br>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

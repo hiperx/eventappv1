@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<!-- ... -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Event Registration{% endblock %}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    {% block styles %}{% endblock %}
+</head>
+<!-- ... -->
+<body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0;">
+    <div class="jumbotron">
+        <div class="d-flex flex-column align-items-center text-center">
+            <a href="{% url 'scanbal:scanbal' %}">
+                <img src="{% static 'logo.png' %}" alt="Logo" width="200" height="200">
+            </a>
+            <h1 class="display-5">Amazon Events App (v. 2.0)</h1>
+            
+        </div>
+    </div>
+    <div class="container mt-5 " style="flex-grow: 1;  overflow-y: auto;">
+        {% block content %}{% endblock %}
+    </div>
+    {% block scripts %}{% endblock %}
+    <!-- Footer -->
+    {% include 'footer.html' %}
+
+    <!-- ... -->
+</body>
+</html>

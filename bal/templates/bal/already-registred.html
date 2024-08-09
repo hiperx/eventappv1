@@ -1,0 +1,53 @@
+<!-- bal/templates/bal/already_registred.html -->
+{% extends 'base.html' %}
+{% block scripts %}
+    <script>
+    function hideMessage() {
+        var messageElement = document.getElementById('message');
+        if (messageElement) {
+            messageElement.style.display = 'none';
+        }
+    }
+
+        // Funkcja ukrywająca komunikat po 3 sekundach
+        setTimeout(hideMessage, 3000);
+    </script>
+
+    <script>
+        {% if success_message %}
+            function redirectAfterDelay() {
+                window.location.href = '{% url "index" %}';
+            }
+
+            // Funkcja przekierowująca stronę po 5 sekundach od załadowania strony
+            setTimeout(redirectAfterDelay, 3000);
+        {% endif %}
+    </script>
+{% endblock%}
+{% block content %}
+<div class="container">
+    <div class="jumbotron" >
+        <div class="alert alert-warning h4 pt-4">
+            <p>Użytkownik jest już zapisany na Bal!</p>
+        </div>
+        {% if identifier %}
+            <form method="post" action="{% url 'bal:already_registred' identifier=identifier %}">
+                {% csrf_token %}
+                <p>Jeżeli chcesz wypisać się z Balu wprowadz swój login w celu potwierdzenia.</p>
+                <input type="hidden" name="identifier" value="{{ identifier }}">
+                <label for="login">Login:</label>
+                <input type="text" id="login" name="login" required autofocus>
+                <br><br>
+                <button type="submit" class="btn btn-primary">Wypisz się</button>
+                <a href="{% url 'index' %}" class="btn btn-secondary">Anuluj</a>
+            </form>
+            {% if success_message %}
+                <h2 id="success-message" style="color: green;" class="pt-2">{{ success_message }}</h2>
+            {% endif %}
+            {% if error_message %}
+                <h2 id="message" style="color: red;" class="pt-2">{{ error_message }}</h2>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
