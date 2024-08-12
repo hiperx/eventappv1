@@ -1,0 +1,48 @@
+<!-- panel/templates/panel/uruchom_event.html -->
+
+{% extends 'panel/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Wybierz, który event chcesz uruchomić:</h2>
+
+    <form method="POST" class="mt-4">
+        {% csrf_token %}
+        {% if events %}
+        <table class="table table-striped table-bordered table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Rodzaj eventu</th>
+                    <th>Rok</th>
+                    <th>Oddział</th>
+                    <th>Wybierz</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td>{{ event.rodzaj_eventu }}</td>
+                    <td>{{ event.rok }}</td>
+                    <td>{{ event.oddzial }}</td>
+                    <td>
+                        <input type="radio" name="event_id" value="{{ event.id }}">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-info btn-sm mt-3">Uruchom</button>
+        {% else %}
+        <p>Brak dostępnych eventów do uruchomienia. Skontaktuj się z administratorem.</p>
+        {% endif %}
+    </form>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-danger" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}

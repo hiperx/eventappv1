@@ -26,7 +26,7 @@ class PiknikAdminForm(forms.ModelForm):
 
 class PiknikAdmin(admin.ModelAdmin):
     form = PiknikAdminForm
-    list_display = ['id', 'identyfikator', 'login', 'imie', 'nazwisko', 'osoba_towarzyszaca', 'liczba_dzieci', 'transport_wlasny', 'przystanek', 'event', 'is_registred', 'data_utworzenia', 'data_modyfikacji']
+    list_display = ['id', 'identyfikator', 'login', 'imie', 'nazwisko', 'osoba_towarzyszaca', 'liczba_dzieci', 'wiek_dziecka_1', 'wiek_dziecka_2', 'wiek_dziecka_3', 'wiek_dziecka_4', 'wiek_dziecka_5', 'wiek_dziecka_6', 'wiek_dziecka_7', 'transport_wlasny', 'przystanek', 'event', 'is_registred', 'data_utworzenia', 'data_modyfikacji', 'zaakceptowane_regulamin']
     search_fields = ['login', 'imie', 'nazwisko']
 
 admin.site.register(Piknik, PiknikAdmin)

@@ -23,6 +23,97 @@ from matplotlib.dates import date2num
 from datetime import datetime, timedelta
 from matplotlib.dates import DateFormatter
 import matplotlib.dates as mdates
+from django.utils import timezone
+
+from django.shortcuts import get_object_or_404
+
+def uruchom_event(request):
+    if request.method == 'POST':
+        event_id = request.POST.get('event_id')
+        if event_id:
+            try:
+                event = ActiveEvent.objects.get(pk=event_id)
+                # Sprawdź, czy istnieją rekordy dla danego eventu w tabelach Bal i Piknik
+                bal_records = Bal.objects.filter(event=event)
+                piknik_records = Piknik.objects.filter(event=event)
+
+                if bal_records.exists() or piknik_records.exists():
+                    # Jeżeli istnieją rekordy dla danego eventu w jednej z tabel
+                    if bal_records.exists():
+                        last_modification_date = bal_records.latest('data_modyfikacji').data_modyfikacji
+                    elif piknik_records.exists():
+                        last_modification_date = piknik_records.latest('data_modyfikacji').data_modyfikacji
+                    
+                    # Sprawdź datę ostatniej modyfikacji
+                    if timezone.now() - last_modification_date > timezone.timedelta(days=3):
+                        # Jeżeli data ostatniej modyfikacji jest większa niż 3 dni temu, wyświetl komunikat
+                        messages.error(request, "Event był już aktywny i nie można go uruchomić ponownie.")
+                    else:
+                        # Jeżeli data ostatniej modyfikacji jest mniejsza niż 3 dni temu, ustaw pole aktywny na True
+                        event.aktywny = True
+                        event.save()
+                else:
+                    # Jeżeli nie ma rekordów dla danego eventu w żadnej z tabel, ustaw pole aktywny na True
+                    event.aktywny = True
+                    event.save()
+
+            except ActiveEvent.DoesNotExist:
+                pass  # Obsłuż sytuację, gdy event o danym ID nie istnieje lub nie został znaleziony
+
+        return redirect('panel:panel-index')  # Przekieruj gdziekolwiek po wykonaniu operacji
+
+    events = ActiveEvent.objects.all()  # Pobierz wszystkie dostępne eventy
+    return render(request, 'panel/uruchom_event.html', {'events': events})
+
+
+
+def lista_przystankow(request):
+    if request.method == 'POST':
+        # Obsługa dodawania nowego przystanku
+        nazwa = request.POST.get('nazwa')
+        
+        # Pobierz aktywne wydarzenie
+        active_event = get_object_or_404(ActiveEvent, aktywny=True)
+        
+        # Sprawdź, czy istnieje aktywne wydarzenie
+        if active_event:
+            oddzial = active_event.oddzial
+            Przystanek.objects.create(nazwa=nazwa, oddzial=oddzial)
+        else:
+            # Jeśli nie ma aktywnego wydarzenia, utwórz przystanek bez przypisanego oddziału
+            Przystanek.objects.create(nazwa=nazwa)
+        
+        return redirect('panel:lista_przystankow')
+
+    # Pobierz posortowaną listę przystanków
+    przystanki = Przystanek.objects.all().order_by('nazwa')
+    
+    # Pobierz aktywne wydarzenie
+    active_event = ActiveEvent.objects.filter(aktywny=True).first()
+    
+    return render(request, 'panel/lista_przystankow.html', {'przystanki': przystanki, 'active_event': active_event})
+
+
+def edytuj_przystanek(request, przystanek_id):
+    przystanek = Przystanek.objects.get(id=przystanek_id)
+    if request.method == 'POST':
+        # Obsługa edycji przystanku
+        nazwa = request.POST.get('nazwa')
+        przystanek.nazwa = nazwa
+        przystanek.save()
+        return redirect('panel:lista_przystankow')
+    
+    # Pobierz aktywne wydarzenie
+    active_event = ActiveEvent.objects.filter(aktywny=True).first()    
+
+    return render(request, 'panel/edytuj_przystanek.html', {'przystanek': przystanek, 'active_event': active_event})
+
+
+def usun_przystanek(request, przystanek_id):
+    przystanek = Przystanek.objects.get(id=przystanek_id)
+    przystanek.delete()
+    return redirect('panel:lista_przystankow')
+
 
 def generate_plot_data(event_type):
     # Pobierz aktywne wydarzenie
@@ -99,6 +190,7 @@ def generate_daily_plot():
     return plot_base64
 
 @method_decorator(login_required, name='dispatch')
+
 class PanelIndexView(View):
     template_name = 'panel/index.html'
 
@@ -153,9 +245,9 @@ class ListaOsobWypisanychView(View):
             piknik_data = Piknik.objects.filter(event=active_event, is_registred=False)
             
             # Przetwórz dane do formatu, który będzie używany w szablonie
-            data = [{'lp': idx + 1, 'login': piknik.login, 'imie': piknik.imie, 'nazwisko': piknik.nazwisko,
-                     'osoba_towarzyszaca': piknik.osoba_towarzyszaca, 'liczba_dzieci': piknik.liczba_dzieci,
-                     'transport_wlasny': piknik.transport_wlasny, 'przystanek': piknik.przystanek, 'data_utworzenia': piknik.data_utworzenia, 'data_modyfikacji': piknik.data_modyfikacji} for idx, piknik in enumerate(piknik_data)]
+            data = [{'lp': idx + 1, 'identyfikator': piknik.identyfikator, 'login': piknik.login, 'imie': piknik.imie, 'nazwisko': piknik.nazwisko,
+                     'osoba_towarzyszaca': piknik.osoba_towarzyszaca, 'liczba_dzieci': piknik.liczba_dzieci, 'wiek_dziecka_1': piknik.wiek_dziecka_1, 'wiek_dziecka_2': piknik.wiek_dziecka_2, 'wiek_dziecka_3': piknik.wiek_dziecka_3, 'wiek_dziecka_4': piknik.wiek_dziecka_4, 'wiek_dziecka_5': piknik.wiek_dziecka_5, 'wiek_dziecka_6': piknik.wiek_dziecka_6, 'wiek_dziecka_7': piknik.wiek_dziecka_7,
+                     'transport_wlasny': piknik.transport_wlasny, 'przystanek': piknik.przystanek, 'data_utworzenia': piknik.data_utworzenia, 'data_modyfikacji': piknik.data_modyfikacji, 'zaakceptowane_regulamin': piknik.zaakceptowane_regulamin} for idx, piknik in enumerate(piknik_data)]
             total_registered = Piknik.objects.filter(event=active_event, is_registred=False).count()
         
         # Przekaz dane do szablonu
@@ -186,9 +278,9 @@ class ListaOsobZapisanychView(View):
             piknik_data = Piknik.objects.filter(event=active_event, is_registred=True)
             
             # Przetwórz dane do formatu, który będzie używany w szablonie
-            data = [{'lp': idx + 1, 'login': piknik.login, 'imie': piknik.imie, 'nazwisko': piknik.nazwisko,
-                     'osoba_towarzyszaca': piknik.osoba_towarzyszaca, 'liczba_dzieci': piknik.liczba_dzieci,
-                     'transport_wlasny': piknik.transport_wlasny, 'przystanek': piknik.przystanek, 'data_utworzenia': piknik.data_utworzenia, 'data_modyfikacji': piknik.data_modyfikacji} for idx, piknik in enumerate(piknik_data)]
+            data = [{'lp': idx + 1, 'identyfikator': piknik.identyfikator, 'login': piknik.login, 'imie': piknik.imie, 'nazwisko': piknik.nazwisko,
+                     'osoba_towarzyszaca': piknik.osoba_towarzyszaca, 'liczba_dzieci': piknik.liczba_dzieci, 'wiek_dziecka_1': piknik.wiek_dziecka_1, 'wiek_dziecka_2': piknik.wiek_dziecka_2, 'wiek_dziecka_3': piknik.wiek_dziecka_3, 'wiek_dziecka_4': piknik.wiek_dziecka_4, 'wiek_dziecka_5': piknik.wiek_dziecka_5, 'wiek_dziecka_6': piknik.wiek_dziecka_6, 'wiek_dziecka_7': piknik.wiek_dziecka_7,
+                     'transport_wlasny': piknik.transport_wlasny, 'przystanek': piknik.przystanek, 'data_utworzenia': piknik.data_utworzenia, 'data_modyfikacji': piknik.data_modyfikacji, 'zaakceptowane_regulamin': piknik.zaakceptowane_regulamin} for idx, piknik in enumerate(piknik_data)]
             total_registered = Piknik.objects.filter(event=active_event, is_registred=True).count()
         
         # Przekaz dane do szablonu
@@ -251,14 +343,24 @@ def wypelnij_dane_piknik(row_data, field_name, col_num, ws, row_num):
     # Mapowanie nazw pól modelu na odpowiadające im kolumny
     field_mapping = {
         'Lp': 'lp',
+        'Badge': 'identyfikator',
         'Login': 'login',
         'Imie': 'imie',
         'Nazwisko': 'nazwisko',
         'Osoba Towarzyszaca': 'osoba_towarzyszaca',
         'Liczba Dzieci': 'liczba_dzieci',
+        'Wiek dziecka 1': 'wiek_dziecka_1',
+        'Wiek dziecka 2': 'wiek_dziecka_2',
+        'Wiek dziecka 3': 'wiek_dziecka_3',
+        'Wiek dziecka 4': 'wiek_dziecka_4',
+        'Wiek dziecka 5': 'wiek_dziecka_5',
+        'Wiek dziecka 6': 'wiek_dziecka_6',
+        'Wiek dziecka 7': 'wiek_dziecka_7',
         'Transport własny': 'transport_wlasny',
         'Przystanek': 'przystanek',
+        'Regulamin pikniku': 'zaakceptowane_regulamin',
         'Data Utworzenia': 'data_utworzenia',
+        
     }
 
     field_name = field_mapping.get(field_name, field_name.lower())
@@ -279,6 +381,10 @@ def wypelnij_dane_piknik(row_data, field_name, col_num, ws, row_num):
 
     # Jeżeli pole to Transport wlasny, zamień wartość na 'Tak' lub 'Nie'
     elif field_name == 'transport_wlasny':
+        cell_value = 'Tak' if cell_value else 'Nie'
+
+    # Jeżeli pole to akceptacja regulaminu, zamień wartość na 'Tak' lub 'Nie'
+    elif field_name == 'zaakceptowane_regulamin':
         cell_value = 'Tak' if cell_value else 'Nie'
 
     ws.cell(row=row_num, column=col_num, value=cell_value)
@@ -302,18 +408,18 @@ def generate_excel_report(request):
         # Pobierz dane z modelu Piknik
         piknik_data = Piknik.objects.filter(event=active_event, is_registred=True)
         # Przetwórz dane do formatu, który będzie używany w szablonie
-        data = [{'lp': idx + 1, 'login': piknik.login, 'imie': piknik.imie, 'nazwisko': piknik.nazwisko,
-                 'osoba_towarzyszaca': piknik.osoba_towarzyszaca, 'liczba_dzieci': piknik.liczba_dzieci,
-                 'transport_wlasny': piknik.transport_wlasny, 'przystanek': piknik.przystanek, 'data_utworzenia': piknik.data_utworzenia} for idx, piknik in enumerate(piknik_data)]
+        data = [{'lp': idx + 1, 'identyfikator': piknik.identyfikator, 'login': piknik.login, 'imie': piknik.imie, 'nazwisko': piknik.nazwisko,
+                 'osoba_towarzyszaca': piknik.osoba_towarzyszaca, 'liczba_dzieci': piknik.liczba_dzieci, 'wiek_dziecka_1': piknik.wiek_dziecka_1, 'wiek_dziecka_2': piknik.wiek_dziecka_2, 'wiek_dziecka_3': piknik.wiek_dziecka_3, 'wiek_dziecka_4': piknik.wiek_dziecka_4, 'wiek_dziecka_5': piknik.wiek_dziecka_5, 'wiek_dziecka_6': piknik.wiek_dziecka_6, 'wiek_dziecka_7': piknik.wiek_dziecka_7,
+                 'transport_wlasny': piknik.transport_wlasny, 'przystanek': piknik.przystanek, 'zaakceptowane_regulamin': piknik.zaakceptowane_regulamin, 'data_utworzenia': piknik.data_utworzenia} for idx, piknik in enumerate(piknik_data)]
 
     # Tworzymy nowy arkusz Excela
     wb = openpyxl.Workbook()
     ws = wb.active
 
     # Nagłówki
-    headers = ['Lp', 'Login', 'Imie', 'Nazwisko']
+    headers = ['Lp', 'Identyfikator', 'Login', 'Imie', 'Nazwisko']
     if active_event and active_event.rodzaj_eventu == 'piknik':
-        headers += ['Osoba Towarzyszaca', 'Liczba Dzieci', 'Transport własny', 'Przystanek','Data Utworzenia']
+        headers += ['Osoba Towarzyszaca', 'Liczba Dzieci', 'Wiek dziecka 1', 'Wiek dziecka 2', 'Wiek dziecka 3', 'Wiek dziecka 4', 'Wiek dziecka 5', 'Wiek dziecka 6', 'Wiek dziecka 7', 'Transport własny', 'Przystanek', 'Regulamin pikniku', 'Data Utworzenia']
     else:
         headers += ['Data Utworzenia']
 
@@ -380,13 +486,22 @@ def wypelnij_dane_wypisanych_piknik(row_data, field_name, col_num, ws, row_num):
     # Mapowanie nazw pól modelu na odpowiadające im kolumny
     field_mapping = {
         'Lp': 'lp',
+        'Badge': 'identyfikator',
         'Login': 'login',
         'Imie': 'imie',
         'Nazwisko': 'nazwisko',
         'Osoba Towarzyszaca': 'osoba_towarzyszaca',
         'Liczba Dzieci': 'liczba_dzieci',
-        'Transport własny': 'transport_wlasny',    
+        'Wiek dziecka 1': 'wiek_dziecka_1',
+        'Wiek dziecka 2': 'wiek_dziecka_2',
+        'Wiek dziecka 3': 'wiek_dziecka_3',
+        'Wiek dziecka 4': 'wiek_dziecka_4',
+        'Wiek dziecka 5': 'wiek_dziecka_5',
+        'Wiek dziecka 6': 'wiek_dziecka_6',
+        'Wiek dziecka 7': 'wiek_dziecka_7',
+        'Transport własny': 'transport_wlasny',
         'Przystanek': 'przystanek',
+        'Regulamin pikniku': 'zaakceptowane_regulamin',
         #'Data Utworzenia': 'data_utworzenia',
         'Data Modyfikacji': 'data_modyfikacji',  # Dodane pole daty modyfikacji
     }
@@ -409,6 +524,10 @@ def wypelnij_dane_wypisanych_piknik(row_data, field_name, col_num, ws, row_num):
 
     # Jeżeli pole to osoba_towarzyszaca, zamień wartość na 'Tak' lub 'Nie'
     elif field_name_wypisani == 'transport_wlasny':
+        cell_value = 'Tak' if cell_value else 'Nie'
+    
+    # Jeżeli pole to akceptacja regulaminu, zamień wartość na 'Tak' lub 'Nie'
+    elif field_name_wypisani == 'zaakceptowane_regulamin':
         cell_value = 'Tak' if cell_value else 'Nie'
 
     ws.cell(row=row_num, column=col_num, value=cell_value)
@@ -433,9 +552,9 @@ def generate_excel_report_wypisani(request):
         # Pobierz dane z modelu Piknik dla wypisanych
         piknik_data = Piknik.objects.filter(event=active_event, is_registred=False)
         # Przetwórz dane do formatu, który będzie używany w szablonie
-        data = [{'lp': idx + 1, 'login': piknik.login, 'imie': piknik.imie, 'nazwisko': piknik.nazwisko,
-                 'osoba_towarzyszaca': piknik.osoba_towarzyszaca, 'liczba_dzieci': piknik.liczba_dzieci,
-                 'transport_wlasny': piknik.transport_wlasny, 'przystanek': piknik.przystanek, 'data_utworzenia': piknik.data_utworzenia,
+        data = [{'lp': idx + 1, 'identyfikator': piknik.identyfikator, 'login': piknik.login, 'imie': piknik.imie, 'nazwisko': piknik.nazwisko,
+                 'osoba_towarzyszaca': piknik.osoba_towarzyszaca, 'liczba_dzieci': piknik.liczba_dzieci, 'wiek_dziecka_1': piknik.wiek_dziecka_1, 'wiek_dziecka_2': piknik.wiek_dziecka_2, 'wiek_dziecka_3': piknik.wiek_dziecka_3, 'wiek_dziecka_4': piknik.wiek_dziecka_4, 'wiek_dziecka_5': piknik.wiek_dziecka_5, 'wiek_dziecka_6': piknik.wiek_dziecka_6, 'wiek_dziecka_7': piknik.wiek_dziecka_7,
+                 'transport_wlasny': piknik.transport_wlasny, 'przystanek': piknik.przystanek, 'zaakceptowane_regulamin': piknik.zaakceptowane_regulamin, 'data_utworzenia': piknik.data_utworzenia,
                  'data_modyfikacji': piknik.data_modyfikacji} for idx, piknik in enumerate(piknik_data)]
 
     # Tworzymy nowy arkusz Excela
@@ -443,9 +562,9 @@ def generate_excel_report_wypisani(request):
     ws = wb.active
 
     # Nagłówki
-    headers = ['Lp', 'Login', 'Imie', 'Nazwisko']
+    headers = ['Lp', 'Badge', 'Login', 'Imie', 'Nazwisko']
     if active_event and active_event.rodzaj_eventu == 'piknik':
-        headers += ['Osoba Towarzyszaca', 'Liczba Dzieci', 'Transport własny', 'Przystanek', 'Data Modyfikacji']
+        headers += ['Osoba Towarzyszaca', 'Liczba Dzieci', 'Wiek dziecka 1', 'Wiek dziecka 2', 'Wiek dziecka 3', 'Wiek dziecka 4', 'Wiek dziecka 5', 'Wiek dziecka 6', 'Wiek dziecka 7', 'Transport własny', 'Przystanek', 'Regulamin pikniku', 'Data Modyfikacji']
     else:
         #headers += ['Data Utworzenia', 'Data Modyfikacji']
         headers += ['Data Modyfikacji']
@@ -490,16 +609,17 @@ def excel_report_piknik_transport(request):
         # Pobierz dane z modelu Piknik
         piknik_data = Piknik.objects.filter(event=active_event, is_registred=True, transport_wlasny=True)
         # Przetwórz dane do formatu, który będzie używany w szablonie
-        data = [{'lp': idx + 1, 'login': piknik.login, 'imie': piknik.imie, 'nazwisko': piknik.nazwisko,
-                 'osoba_towarzyszaca': piknik.osoba_towarzyszaca, 'liczba_dzieci': piknik.liczba_dzieci,
-                 'transport_wlasny': piknik.transport_wlasny, 'data_utworzenia': piknik.data_utworzenia} for idx, piknik in enumerate(piknik_data)]
+        data = [{'lp': idx + 1, 'identyfikator': piknik.identyfikator, 'login': piknik.login, 'imie': piknik.imie, 'nazwisko': piknik.nazwisko,
+                 'osoba_towarzyszaca': piknik.osoba_towarzyszaca, 'liczba_dzieci': piknik.liczba_dzieci, 'wiek_dziecka_1': piknik.wiek_dziecka_1, 'wiek_dziecka_2': piknik.wiek_dziecka_2, 'wiek_dziecka_3': piknik.wiek_dziecka_3, 'wiek_dziecka_4': piknik.wiek_dziecka_4, 'wiek_dziecka_5': piknik.wiek_dziecka_5, 'wiek_dziecka_6': piknik.wiek_dziecka_6, 'wiek_dziecka_7': piknik.wiek_dziecka_7,
+                 'transport_wlasny': piknik.transport_wlasny, 'zaakceptowane_regulamin': piknik.zaakceptowane_regulamin, 'data_utworzenia': piknik.data_utworzenia} for idx, piknik in enumerate(piknik_data)]
 
     # Tworzymy nowy arkusz Excela
     wb = openpyxl.Workbook()
     ws = wb.active
 
     # Nagłówki
-    headers = ['Lp', 'Login', 'Imie', 'Nazwisko', 'Osoba Towarzyszaca', 'Liczba Dzieci', 'Transport własny', 'Data Utworzenia']
+    headers = ['Lp', 'Badge', 'Login', 'Imie', 'Nazwisko', 'Osoba Towarzyszaca', 'Liczba Dzieci', 'Wiek dziecka 1', 'Wiek dziecka 2', 'Wiek dziecka 3', 'Wiek dziecka 4', 'Wiek dziecka 5', 'Wiek dziecka 6', 'Wiek dziecka 7', 'Transport własny',  'Regulamin pikniku', 'Data Utworzenia']
+    
     for col_num, header in enumerate(headers, 1):
         col_letter = get_column_letter(col_num)
         ws[f'{col_letter}1'] = header
@@ -536,16 +656,16 @@ def excel_report_piknik_przystanek(request):
         # Pobierz dane z modelu Piknik
         piknik_data = Piknik.objects.filter(event=active_event, is_registred=True, transport_wlasny=False)
         # Przetwórz dane do formatu, który będzie używany w szablonie
-        data = [{'lp': idx + 1, 'login': piknik.login, 'imie': piknik.imie, 'nazwisko': piknik.nazwisko,
-                 'osoba_towarzyszaca': piknik.osoba_towarzyszaca, 'liczba_dzieci': piknik.liczba_dzieci,
-                 'przystanek': piknik.przystanek, 'data_utworzenia': piknik.data_utworzenia} for idx, piknik in enumerate(piknik_data)]
+        data = [{'lp': idx + 1, 'identyfikator': piknik.identyfikator, 'login': piknik.login, 'imie': piknik.imie, 'nazwisko': piknik.nazwisko,
+                 'osoba_towarzyszaca': piknik.osoba_towarzyszaca, 'liczba_dzieci': piknik.liczba_dzieci, 'wiek_dziecka_1': piknik.wiek_dziecka_1, 'wiek_dziecka_2': piknik.wiek_dziecka_2, 'wiek_dziecka_3': piknik.wiek_dziecka_3, 'wiek_dziecka_4': piknik.wiek_dziecka_4, 'wiek_dziecka_5': piknik.wiek_dziecka_5, 'wiek_dziecka_6': piknik.wiek_dziecka_6, 'wiek_dziecka_7': piknik.wiek_dziecka_7,
+                 'przystanek': piknik.przystanek, 'zaakceptowane_regulamin': piknik.zaakceptowane_regulamin, 'data_utworzenia': piknik.data_utworzenia} for idx, piknik in enumerate(piknik_data)]
 
     # Tworzymy nowy arkusz Excela
     wb = openpyxl.Workbook()
     ws = wb.active
 
     # Nagłówki
-    headers = ['Lp', 'Login', 'Imie', 'Nazwisko', 'Osoba Towarzyszaca', 'Liczba Dzieci', 'Przystanek', 'Data Utworzenia']
+    headers = ['Lp', 'Badge', 'Login', 'Imie', 'Nazwisko', 'Osoba Towarzyszaca', 'Liczba Dzieci', 'Wiek dziecka 1', 'Wiek dziecka 2', 'Wiek dziecka 3', 'Wiek dziecka 4', 'Wiek dziecka 5', 'Wiek dziecka 6', 'Wiek dziecka 7', 'Przystanek',  'Regulamin pikniku', 'Data Utworzenia']
     for col_num, header in enumerate(headers, 1):
         col_letter = get_column_letter(col_num)
         ws[f'{col_letter}1'] = header

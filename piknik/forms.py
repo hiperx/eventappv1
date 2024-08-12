@@ -1,31 +1,47 @@
-# piknik/forms.py
 from django import forms
 from .models import Piknik
 from events.models import ActiveEvent
 from piknik.models import Przystanek
 from django.core.validators import RegexValidator
 
-# class PiknikRegistrationForm(forms.Form):
-#     login = forms.CharField(label='Login', max_length=255, widget=forms.TextInput(attrs={'autofocus': True}))
-#     imie = forms.CharField(label='Imię', max_length=255, error_messages={'required': 'To pole jest wymagane.'})
-#     nazwisko = forms.CharField(label='Nazwisko', max_length=255, error_messages={'required': 'To pole jest wymagane.'})
-#     osoba_towarzyszaca = forms.BooleanField(label='Osoba towarzysząca', required=False)
-#     liczba_dzieci = forms.IntegerField(label='Liczba dzieci', widget=forms.Select(choices=[(0, 'Brak'), (1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5')]))
-#     przystanek = forms.ChoiceField(label='Przystanek', choices=[('glogowska', 'Głogowska'), ('hetmanska', 'Hetmańska'), ('gorczyn', 'Górczyń')], widget=forms.Select(choices=[('glogowska', 'Głogowska'), ('hetmanska', 'Hetmańska'), ('gorczyn', 'Górczyń')]))
-
-
 class PiknikRegistrationForm(forms.Form):
-    login = forms.CharField(label='Login', max_length=255, widget=forms.TextInput(attrs={'autofocus': True}))
+    login_validator = RegexValidator(
+        regex='^[a-zA-Z]+$',
+        message='Login powinien składać się tylko z liter a-z.',
+    )
+
+    login = forms.CharField(
+        label='Login',
+        max_length=255,
+        widget=forms.TextInput(attrs={'autofocus': True}),
+        validators=[login_validator],
+        error_messages={
+            'invalid': 'Login powinien składać się tylko z liter a-z.',
+            'required': 'Pole nie może być puste'
+        }
+    )
     imie = forms.CharField(label='Imię', max_length=255, error_messages={'required': 'To pole jest wymagane.'})
     nazwisko = forms.CharField(label='Nazwisko', max_length=255, error_messages={'required': 'To pole jest wymagane.'})
     osoba_towarzyszaca = forms.BooleanField(label='Osoba towarzysząca', required=False)
-    liczba_dzieci = forms.IntegerField(label='Liczba dzieci', widget=forms.Select(choices=[(0, 'Brak'), (1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5')]))
+    liczba_dzieci = forms.IntegerField(label='Liczba dzieci', widget=forms.Select(choices=[(0, 'Brak'), (1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5'), (6, '6'), (7, '7')]))
+    wiek_dziecka_1 = forms.IntegerField(label='Wiek dziecka 1', required=False, widget=forms.Select(choices=[(i, i) for i in range(19)]))
+    wiek_dziecka_2 = forms.IntegerField(label='Wiek dziecka 2', required=False, widget=forms.Select(choices=[(i, i) for i in range(19)]))
+    wiek_dziecka_3 = forms.IntegerField(label='Wiek dziecka 3', required=False, widget=forms.Select(choices=[(i, i) for i in range(19)]))
+    wiek_dziecka_4 = forms.IntegerField(label='Wiek dziecka 4', required=False, widget=forms.Select(choices=[(i, i) for i in range(19)]))
+    wiek_dziecka_5 = forms.IntegerField(label='Wiek dziecka 5', required=False, widget=forms.Select(choices=[(i, i) for i in range(19)]))
+    wiek_dziecka_6 = forms.IntegerField(label='Wiek dziecka 6', required=False, widget=forms.Select(choices=[(i, i) for i in range(19)]))
+    wiek_dziecka_7 = forms.IntegerField(label='Wiek dziecka 7', required=False, widget=forms.Select(choices=[(i, i) for i in range(19)]))    
     transport_wlasny = forms.BooleanField(label='Transport własny', required=False)
     przystanek = forms.ModelChoiceField(
         label='Przystanek',
         queryset=Przystanek.objects.none(),
         widget=forms.Select(attrs={'class': 'form-control'}),
         required=False,
+    )
+    zaakceptowane_regulamin = forms.BooleanField(
+        label='Akceptuję regulamin eventu',
+        required=True,
+        error_messages={'required': 'Musisz zaakceptować regulamin eventu.'}
     )
 
     def __init__(self, *args, **kwargs):
@@ -34,26 +50,16 @@ class PiknikRegistrationForm(forms.Form):
         # Pobierz aktywny event
         active_event = ActiveEvent.objects.filter(rodzaj_eventu='piknik', aktywny=True).first()
 
+        # Pobierz posortowany queryset przystanków
+        sorted_przystanki = Przystanek.objects.all().order_by('nazwa')
+
         # Ogranicz dostępne przystanki do tych związanych z aktywnym oddziałem
         if active_event:
             self.fields['przystanek'].queryset = Przystanek.objects.filter(oddzial=active_event.oddzial)
-    
-    login_validator = RegexValidator(
-        regex='^[a-zA-Z]+$',
-        #message='Login powinien składać się tylko z liter a-z.',
-        #code='invalid_login'
-    )
-
-    login = forms.CharField(
-        max_length=255,
-        widget=forms.TextInput(attrs={'autofocus': True}),
-        validators=[login_validator],
-        error_messages={'invalid': 'Login powinien składać się tylko z liter a-z.',
-                        'required': 'Pole nie może być puste'}
-    )
-
-    
         
+        # Przekazanie posortowanego queryset do pola przystanek
+        self.fields['przystanek'].queryset = sorted_przystanki
+    
     def clean_imie(self):
         # Konwertuj imię na formę, gdzie każdy wyraz zaczyna się dużą literą
         imie = self.cleaned_data.get('imie')
@@ -68,7 +74,6 @@ class PiknikRegistrationForm(forms.Form):
             return nazwisko.title()
         return nazwisko
     
-
     def clean(self):
         cleaned_data = super().clean()
         transport_wlasny = cleaned_data.get('transport_wlasny')

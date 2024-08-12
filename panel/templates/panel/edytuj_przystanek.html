@@ -1,0 +1,22 @@
+<!-- templates/panel/edytuj_przystanek.html -->
+{% extends 'panel/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Edytuj Przystanek</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="nazwa">Nazwa przystanku:</label>
+            <input type="text" id="nazwa" name="nazwa" class="form-control" value="{{ przystanek.nazwa }}" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Zapisz zmiany</button>
+        <a href="{% url 'panel:lista_przystankow' %}" class="btn btn-secondary mt-3">Anuluj</a>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Dodaj tutaj dodatkowe skrypty, jeśli są potrzebne -->
+{% endblock %}

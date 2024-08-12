@@ -1,10 +1,30 @@
+{% load static %}
 <!-- Footer -->
 
 
-  <footer class="bg-dark text-light py-3" style="flex-shrink: 0; ">
-    <div class="ml-5">
-        <p>&copy; 2024 - Piotr Kulesza. All rights reserved.</p>
-    </div>
+<footer class="bg-dark text-light py-3 fixed-bottom" style="flex-shrink: 0; display: flex; justify-content: space-between;">
+  <div class="ml-5">
+      <p>&copy; 2024 - Amazon POZ1 IT - Piotr Kulesza. All rights reserved.</p>
+  </div>
+  <div class="mr-5">
+    
+    <p>Ostatnia aktualizacja: <span id="panel-version3"></span></p>
+    
+
+</div>
 </footer>
 
 <!-- End Footer -->
+{% block scripts %} 
+
+    <script>
+        // Odczytaj zawartość pliku JSON
+        fetch("{% static 'informacje.json' %}")
+            .then(response => response.json())
+            .then(data => {
+                // Wyświetl odpowiednie informacje na stronie
+                document.getElementById('panel-version3').innerText = data.panelopis;
+            })
+            .catch(error => console.error('Error:', error));
+    </script>
+{% endblock %}

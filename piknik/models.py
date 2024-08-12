@@ -3,19 +3,27 @@ from events.models import ActiveEvent, Oddzial
 from django.core.exceptions import ValidationError
 
 class Piknik(models.Model):
-    identyfikator = models.IntegerField()
+    identyfikator = models.IntegerField() 
     login = models.CharField(max_length=255)
     imie = models.CharField(max_length=255, blank=False)
     nazwisko = models.CharField(max_length=255, blank=False)
     osoba_towarzyszaca = models.BooleanField()
-    liczba_dzieci = models.IntegerField(choices=[(0, 'Brak'), (1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5')])
-    #przystanek = models.ForeignKey('Przystanek', on_delete=models.SET_NULL, null=True, blank=False)
+    liczba_dzieci = models.IntegerField(choices=[(0, 'Brak'), (1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5'), (6, '6'), (7, '7')])
+    wiek_dziecka_1 = models.IntegerField(blank=True, null=True)
+    wiek_dziecka_2 = models.IntegerField(blank=True, null=True)
+    wiek_dziecka_3 = models.IntegerField(blank=True, null=True)
+    wiek_dziecka_4 = models.IntegerField(blank=True, null=True)
+    wiek_dziecka_5 = models.IntegerField(blank=True, null=True)
+    wiek_dziecka_6 = models.IntegerField(blank=True, null=True)
+    wiek_dziecka_7 = models.IntegerField(blank=True, null=True)
     przystanek = models.ForeignKey('Przystanek', on_delete=models.SET_NULL, null=True, blank=True)
     event = models.ForeignKey(ActiveEvent, on_delete=models.SET_NULL, null=True, blank=True)
     transport_wlasny = models.BooleanField(default=True)
     is_registred = models.BooleanField(default=False)
     data_utworzenia = models.DateTimeField(auto_now_add=True)
     data_modyfikacji = models.DateTimeField(auto_now=True)
+    zaakceptowane_regulamin = models.BooleanField(default=False, blank=False)
+
 
     class Meta:
         verbose_name_plural = "Piknik"
@@ -39,5 +47,5 @@ class Przystanek(models.Model):
 
     def __str__(self):
         return self.nazwa
-    
+     
     

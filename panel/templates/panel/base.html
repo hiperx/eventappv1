@@ -7,6 +7,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Admin Panel{% endblock %}</title>
+    <!-- Popper.js -->
+    <sript src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js" integrity="sha384-oBqDVmMz4fnFO9gyb5TyZmqkuqcAqCZp2U6E4q2kg/3G9pvcNFfVpLxiD0ygap6R" crossorigin="anonymous"></script>
+
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     {% block styles %}
     <style>
@@ -21,7 +24,7 @@
         }
 
         .navbar-brand:hover,
-        .nav-link:hover {
+        .nav-link:hover { 
             color: white; /* White text color on hover */
         }
 
@@ -58,7 +61,9 @@
           <div class="d-flex justify-content-between align-items-center w-100">
             <a class="navbar-brand" href="{% url 'panel:panel-index' %}">
               <img src="{% static 'logo.png' %}" width="80" height="80" class="d-inline-block align-content-center" alt="Logo">
-              <b>Panel administracyjny EventApp (v. 1.20)</b>
+
+              <b>Panel administracyjny EventApp <span id="panel-version"></span></b>
+
             </a>
             <div class="text-right">
               <form action="{% url 'panel:logout' %}" method="post" id="logout-form">
@@ -89,8 +94,17 @@
 
       </li>
       <a class="nav-link" href="{% url 'panel:panel-index' %}">Podsumowanie</a>
+    {% if active_event %}
       <a class="nav-link" href="{% url 'panel:lista_osob_zapisanych' %}">Lista zapisanych</a>
       <a class="nav-link" href="{% url 'panel:lista_osob_wypisanych' %}">Lista wypisanych</a>
+      {% if active_event.rodzaj_eventu == 'piknik' %}
+      <a class="nav-link" href="{% url 'panel:lista_przystankow' %}">Lista przystanków</a>
+
+      {% endif %}
+    {% endif %}
+    {% if not active_event %}
+      <a class="nav-link" href="{% url 'panel:uruchom_event' %}">Uruchom zapisy</a>
+    {% endif %}
       <a id="wylacz-link" class="nav-link" href="#" onclick="showConfirmationModal()">Wyłącz zapisy</a>
 
       <!-- Modal potwierdzenia -->
@@ -112,15 +126,18 @@
         </div>
       </div>
     </nav>
-    <div class="container mt-5 " style="flex-grow: 1;  overflow-y: auto;">
+    <div class="container mt-5 " style="flex-grow: 1;  margin-bottom: 60px;">
     {% block content %}{% endblock %}
     </div>
+  </body>
+  </html>
+  
     <!-- Footer -->
     {% include 'footer.html' %}
 
-    {% block scripts %}{% endblock %}
+    {% block scripts %}
     <!-- Bootstrap JS (popper.js is required for dropdowns) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.slim.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     
@@ -183,5 +200,36 @@
       });
     </script>
 
-</body>
-</html>
+
+
+    <script>
+      // Odczytaj zawartość pliku JSON
+      fetch("{% static 'informacje.json' %}")
+          .then(response => {
+              console.log("Response received:", response);
+              return response.json();
+          })
+          .then(data => {
+              console.log("Data parsed:", data);
+              document.getElementById('panel-version').innerText = data.panelv;
+          })
+          .catch(error => console.error('Error:', error));
+  </script>
+
+<script>
+  // Obsługa kliknięcia przycisku "Usuń" w modalu potwierdzenia usuwania przystanku
+  $('#confirm-delete-btn').click(function () {
+      var przystanekId = $('#confirm-delete-btn').attr('data-przystanek-id');
+      window.location.href = "{% url 'panel:usun_przystanek' 999 %}".replace('999', przystanekId);
+  });
+
+  // Funkcja do pokazania modala potwierdzenia usuwania przystanku
+  function showDeleteConfirmationModal(przystanekId, przystanekName) {
+      $('#delete-confirmation-modal').modal('show');
+      $('#przystanek-name').text(przystanekName);
+      $('#confirm-delete-btn').attr('data-przystanek-id', przystanekId);
+  }
+</script>
+
+
+  {% endblock %}
