@@ -111,6 +111,17 @@ Panel V. 1.20 :
 - dodano 2 dodatkowe raporty dla zapisanych z transportm wlasnym i amazonskim
 -- do admina django dodano wyszukiwanie
 #------------------------------------------------------------------------#
+Panel V 2.0 / App V 1.6
+- poprawiono bledy
+- dodano nowe pola dla piknik
+- zaktualizowano raporty dla piknik
+- dodano opcje do panelu
+#------------------------------------------------------------------------#
+
+
+
+
+
 
 Piknik : - zmiana wersji aplikacji na (2.0)
 admin.py , model, views, forms - work in progress ,confirm.html
